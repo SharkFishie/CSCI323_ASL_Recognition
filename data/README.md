@@ -1,10 +1,8 @@
-# 📂 Dataset: ASL Alphabet
+# Dataset: ASL Alphabet
 
 This directory is intended to store the ASL Alphabet dataset used for training and evaluation. The dataset is **not included** in this repository due to its large size (~1.1 GB).
 
----
-
-## 📥 Download Instructions
+## Download Instructions
 
 ### Option 1: Kaggle Website
 
@@ -46,21 +44,21 @@ files.upload()  # Upload kaggle.json
 
 ---
 
-## 📁 Expected Folder Structure After Extraction
+## Expected Folder Structure After Extraction
 
 ```
 data/
 ├── README.md                    # This file
 ├── asl_alphabet_train/
 │   └── asl_alphabet_train/
-│       ├── A/                   # ~3,000 images
-│       ├── B/                   # ~3,000 images
-│       ├── C/                   # ~3,000 images
-│       ├── ...                  # (one folder per letter)
-│       ├── Z/                   # ~3,000 images
-│       ├── space/               # ~3,000 images
-│       ├── del/                 # ~3,000 images
-│       └── nothing/             # ~3,000 images
+│       ├── A/       
+│       ├── B/                
+│       ├── C/                   
+│       ├── ...                 
+│       ├── Z/                   
+│       ├── space/               
+│       ├── del/                 
+│       └── nothing/            
 └── asl_alphabet_test/
     └── asl_alphabet_test/
         ├── A_test.jpg
@@ -71,7 +69,7 @@ data/
 
 ---
 
-## 📊 Dataset Specifications
+## Dataset Specifications
 
 | Property | Value |
 |----------|-------|
@@ -85,7 +83,7 @@ data/
 
 ---
 
-## ⚠️ Important Notes
+## Important Notes
 
 - The dataset files are listed in `.gitignore` and will **not** be tracked by Git
 - Each team member must download the dataset independently
