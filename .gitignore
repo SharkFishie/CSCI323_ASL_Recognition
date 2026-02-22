@@ -1,0 +1,81 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# =========================
+# Virtual Environments
+# =========================
+venv/
+env/
+ENV/
+.venv/
+
+# =========================
+# Jupyter Notebooks
+# =========================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# =========================
+# Dataset Files (too large for git)
+# =========================
+data/train/
+data/test/
+data/asl_alphabet_train/
+data/asl_alphabet_test/
+data/*.zip
+data/*.tar.gz
+data/*.rar
+
+# =========================
+# Model Files
+# =========================
+*.h5
+*.hdf5
+*.pkl
+*.pth
+*.pt
+*.onnx
+results/models/*.h5
+results/models/*.pkl
+results/models/*.pth
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# =========================
+# OS Generated
+# =========================
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================
+# Temporary Files
+# =========================
+*.tmp
+*.log
+*.bak
+*.cache
+
+# =========================
+# Distribution / Packaging
+# =========================
+dist/
+build/
+*.egg-info/
+*.egg
