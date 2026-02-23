@@ -1,73 +1,62 @@
-
-# Python
-
+#python runtime files (garbage from running code)
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 
-# Virtual Environments
-
+#virtual environments 
 venv/
 env/
 ENV/
 .venv/
 
-# Jupyter Notebooks
-
+#jupyter Notebook checkpoints
 .ipynb_checkpoints/
-*.ipynb_checkpoints
+*.ipynb_checkpoints/
 
-# Dataset Files (too large for git)
-
+#data files (too big for git)
+data/sign_mnist_train.csv
+data/sign_mnist_test.csv
+data/*.csv
+data/*.zip
 data/train/
 data/test/
-data/asl_alphabet_train/
-data/asl_alphabet_test/
-data/*.zip
-data/*.tar.gz
-data/*.rar
 
-# Model Files
-
+#model files (too big for git)
+#trained models 
+results/models/*.h5
+results/models/*.hdf5
+results/models/*.pkl
 *.h5
 *.hdf5
-*.pkl
 *.pth
-*.pt
-*.onnx
-results/models/*.h5
-results/models/*.pkl
-results/models/*.pth
+*.ckpt
 
-# IDE / Editor
+#python packaging (eggsssss)
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
 
+#ide/editor files
+#VS Code settings
 .vscode/
+.vscode/settings.json
+
+#other editors
 .idea/
 *.swp
 *.swo
 *~
-.project
-.settings/
 
-# OS Generated
-
+#operating system files (mac and windows)
 .DS_Store
-.DS_Store?
 Thumbs.db
-ehthumbs.db
-Desktop.ini
+desktop.ini
 
-# Temporary Files
-
+#temp files
 *.tmp
 *.log
 *.bak
-*.cache
-
-# Distribution / Packaging
-
-dist/
-build/
-*.egg-info/
-*.egg
+.cache/
