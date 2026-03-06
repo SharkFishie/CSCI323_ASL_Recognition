@@ -1,0 +1,36 @@
+
+basile cnn model performance metrics
+Generated: 2026-03-06 13:01:56
+
+model arch:
+- Type: Simple CNN (Baseline)
+- Layers: 1 Conv2D, 1 MaxPooling, 1 Dense
+- Total Parameters: 348,121
+
+training :
+- Training samples: 21,964
+- Validation samples: 5,491
+- Epochs trained: 15
+- Training time: 58.7 seconds (1.0 minutes)
+- Batch size: 32
+
+validation performance :
+- Accuracy: 1.0000 (100.00%)
+- Precision: 1.0000
+- Recall: 1.0000
+- F1-Score: 1.0000
+- Loss: 0.0012
+
+training history:
+- Final training accuracy: 1.0000
+- Final validation accuracy: 1.0000
+- Best validation accuracy: 1.0000
+
+saved to:
+- results/models/baseline_model.h5
+
+figs generated:
+- results/figures/baseline_learning_curves.png
+- results/figures/baseline_confusion_matrix.png
+- results/figures/baseline_per_class_accuracy.png
+
