@@ -1,0 +1,36 @@
+
+custom cnn model perfromance metrics 
+
+model arhitecture :
+- Type: Custom Deep CNN
+- Layers: 5 Conv2D, 3 MaxPooling, 1 Dense + Batch Norm + Dropout
+- Total Parameters: 291,449
+
+training details:
+- Training samples: 21,964
+- Validation samples: 5,491
+- Epochs trained: 13
+- Training time: 305.5s (5.1 min)
+- Batch size: 64
+- Learning rate: 0.001 (with reduction on plateau)
+
+validation performance:
+- Accuracy: 1.0000 (100.00%)
+- Precision: 1.0000
+- Recall: 1.0000
+- F1-Score: 1.0000
+- Loss: 0.0038
+
+comparison to baseline:
+- Baseline accuracy: 1.0000 (100.00%)
+- Custom CNN accuracy: 1.0000 (100.00%)
+- Improvement: +0.00 percentage points
+
+best epoch:
+- Best validation accuracy: 1.0000
+
+files saved:
+- Model: results/models/custom_cnn_model.h5
+- Metrics: results/metrics/custom_cnn_metrics.txt
+- Figures: results/figures/custom_cnn_*.png
+
