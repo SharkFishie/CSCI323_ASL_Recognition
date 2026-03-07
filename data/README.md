@@ -17,7 +17,7 @@ This directory stores the Sign Language MNIST dataset used for training and eval
 pip install kaggle
 
 # Set up API credentials (~/.kaggle/kaggle.json)
-# Download from: https://www.kaggle.com/settings → API → Create New Token
+# Download from: https://www.kaggle.com/settings 
 
 # Download the dataset
 kaggle datasets download -d datamunge/sign-language-mnist -p data/
