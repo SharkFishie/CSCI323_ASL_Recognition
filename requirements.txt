@@ -1,21 +1,18 @@
-#needs to be eddited at the edn
 # CSCI323 ASL Alphabet Recognition - Dependencies
 
-
 # Deep Learning Framework
-
+tensorflow
 
 # Data Processing
-
+numpy
+pandas
 
 # Visualization
-
+matplotlib
+seaborn
 
 # Machine Learning Utilities
-
-
-# Image Processing
-
+scikit-learn
 
 # Jupyter Notebook
-
+jupyter
