@@ -1,7 +1,7 @@
 # ASL Alphabet Recognition Using Convolutional Neural Networks
 
-> **CSCI323 Modern Artificial Intelligence**  
-> University of Wollongong in Dubai (UOWD)  
+> **Modern Artificial Intelligence**  
+> (UOWD)  
 > Spring 2026
 
 ---
