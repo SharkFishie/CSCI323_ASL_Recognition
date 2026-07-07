@@ -3,6 +3,10 @@
 # Deep Learning Framework
 tensorflow
 
+# Realtime Vision
+opencv-python
+mediapipe
+
 # Data Processing
 numpy
 pandas

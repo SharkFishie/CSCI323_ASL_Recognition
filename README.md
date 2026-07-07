@@ -1,60 +1,48 @@
 # ASL Alphabet Recognition Using Convolutional Neural Networks
 
-> **Modern Artificial Intelligence**  
-> (UOWD)  
-> Spring 2026
-
----
-
 ## Overview
 
-This project explores American Sign Language (ASL) alphabet recognition using Convolutional Neural Networks (CNNs). The goal is to classify static hand gesture images corresponding to the 26 letters of the ASL alphabet, with potential applications in assistive communication technology.
+This repository started as a static image-classification project for American Sign Language (ASL) alphabet recognition. The initial work focuses on training convolutional neural networks to classify still images of hand poses for the 29 classes in the Kaggle ASL Alphabet dataset.
 
-The project investigates multiple CNN architectures — from a simple baseline to deeper custom networks and transfer learning approaches (VGG16/ResNet) — to evaluate accuracy and generalisation on ASL hand gesture datasets.
-
----
+The project is now being extended with a first-pass realtime webcam inference scaffold. This new code is intentionally simple and modular: it is not a claim that live ASL recognition is fully solved yet. Instead, it provides a beginner-friendly starting point for webcam capture, hand tracking, and live inference with a saved model.
 
 ## Dataset
 
-The dataset is **not included** in this repository due to its size.
+The project uses the [ASL Alphabet dataset from Kaggle](https://www.kaggle.com/datasets/grassknoted/asl-alphabet). The dataset contains roughly 87,000 images of size 200x200 across 29 classes: A through Z, plus SPACE, DELETE, and NOTHING.
 
-The project uses the [ASL Alphabet dataset from Kaggle](https://www.kaggle.com/datasets/grassknoted/asl-alphabet), which contains 87,000 images (200×200 px) across 29 classes (A–Z + SPACE, DELETE, NOTHING).
-
----
+This dataset is suitable for baseline static-image training. For realtime webcam use, later work may need webcam-style samples or a landmark-based dataset to improve robustness under different lighting, hand positions, and backgrounds.
 
 ## Tech Stack
 
-- **Deep Learning:** TensorFlow / Keras
-- **Data Processing:** NumPy, Pandas
-- **Visualisation:** Matplotlib, Seaborn
-- **Evaluation:** scikit-learn (classification report, confusion matrix)
-- **Environment:** Jupyter Notebook / Google Colab (GPU)
-
----
+- Deep learning: TensorFlow / Keras
+- Realtime vision: OpenCV, MediaPipe
+- Data processing: NumPy, Pandas
+- Visualization: Matplotlib, Seaborn
+- Evaluation: scikit-learn
+- Environment: Jupyter notebooks
 
 ## Project Structure
 
-```
+```text
 CSCI323_ASL_Recognition/
-├── README.md                  # Project documentation
-├── .gitignore
-├── requirements.txt           # Python dependencies
-│
-├── data/                      # Dataset directory (not tracked)
-│   └── README.md              # Dataset download instructions
-│
-├── notebooks/                 # Jupyter / Colab notebooks
-│
-├── src/                       # Source code modules
-│   └── __init__.py
-│
-└── results/                   # Experiment outputs
-    ├── figures/               # Plots and confusion matrices
-    ├── metrics/               # Evaluation metrics (CSV/JSON)
-    └── models/                # Saved model weights (excluded from git)
+├── README.md
+├── requirements.txt
+├── data/
+│   └── README.md
+├── docs/
+│   └── realtime-plan.md
+├── notebooks/
+├── src/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── hand_tracking.py
+│   ├── preprocessing.py
+│   └── live_inference.py
+└── results/
+    ├── figures/
+    ├── metrics/
+    └── models/
 ```
-
----
 
 ## Setup
 
@@ -74,27 +62,25 @@ source venv/bin/activate        # Linux/macOS
 pip install -r requirements.txt
 ```
 
-### Google Colab
-
-```python
-from google.colab import drive
-drive.mount('/content/drive')
-
-!git clone https://github.com/mwlde/CSCI323_ASL_Recognition.git
-%cd CSCI323_ASL_Recognition
-!pip install -r requirements.txt
-```
-
----
-
 ## Approach
 
-Three model configurations were explored:
+The original workflow is still centered on static image classification with CNNs. The repository currently supports training and evaluating models on still images, while the new scaffold adds a simple path toward realtime inference.
 
-| Model | Description |
-|-------|-------------|
-| Baseline CNN | Simple 3-layer CNN for initial benchmarking |
-| Custom CNN | Deeper architecture with batch normalisation and dropout |
-| Transfer Learning | Fine-tuned VGG16 / ResNet50 with frozen base layers |
+The live webcam scaffold uses:
 
-Evaluation metrics: accuracy, precision, recall, F1 score, and confusion matrix across all 29 classes.
+- OpenCV for webcam capture and display
+- MediaPipe Hands for hand detection and landmark tracking
+- TensorFlow / Keras for loading a trained model later placed at results/models/best_model.h5
+- A short prediction-history buffer to smooth outputs across frames
+
+This is a first-pass scaffold, not a finished realtime recognition system.
+
+## Running the webcam scaffold
+
+Once a trained model is available at results/models/best_model.h5, run:
+
+```bash
+python -m src.live_inference
+```
+
+If the model file is missing, the webcam window will still open and show a warning overlay so the scaffold can be tested and developed further.
