@@ -2,6 +2,7 @@
 
 from collections import Counter, deque
 import os
+import time
 
 import cv2
 import numpy as np
@@ -40,36 +41,19 @@ def smooth_prediction(history, label, confidence):
     return most_common_label, average_confidence
 
 
-def predict_frame(frame, model, hand_tracker, prediction_history):
-    """Run detection, crop extraction, and prediction for a single frame."""
-    if not hand_tracker.available:
-        return None, None, prediction_history
+def classify_crop(frame, model, bbox, prediction_history):
+    """Crop the hand region, run the classifier, and draw the label.
 
-    results = hand_tracker.detect(frame)
-    hand_tracker.draw(frame, results)
-
-    if results is None or not getattr(results, "multi_hand_landmarks", None):
-        return None, None, prediction_history
-
-    hand_landmarks = results.multi_hand_landmarks[0]
-    bbox = hand_tracker.extract_bbox(frame, hand_landmarks)
-    if bbox is None:
-        return None, None, prediction_history
-
+    Returns (label, confidence) or (None, None) when nothing was predicted.
+    """
     x_min, y_min, x_max, y_max = bbox
-
-    cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-
     crop = frame[y_min:y_max, x_min:x_max]
     if crop.size == 0:
-        return None, None, prediction_history
+        return None, None
 
     batch = preprocess_crop(crop)
     if batch is None:
-        return None, None, prediction_history
-
-    if model is None:
-        return None, None, prediction_history
+        return None, None
 
     prediction = model.predict(batch, verbose=0)[0]
     predicted_index = int(np.argmax(prediction))
@@ -80,8 +64,7 @@ def predict_frame(frame, model, hand_tracker, prediction_history):
 
     text = f"{smoothed_label}: {smoothed_confidence:.2f}"
     cv2.putText(frame, text, (x_min, max(0, y_min - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-
-    return smoothed_label, smoothed_confidence, prediction_history
+    return smoothed_label, smoothed_confidence
 
 
 def main():
@@ -97,12 +80,27 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 
+    start_time = time.time()
+
     while True:
         success, frame = cap.read()
         if not success:
             break
 
         frame = cv2.flip(frame, 1)
+        # detect_for_video requires strictly increasing timestamps
+        timestamp_ms = int((time.time() - start_time) * 1000)
+
+        # Run the Tasks HandLandmarker on this frame
+        result = hand_tracker.detect(frame, timestamp_ms)
+        hand_tracker.draw(frame, result)
+
+        # Compute a padded bounding box around the first detected hand
+        first_hand = hand_tracker.get_first_hand(result)
+        bbox = hand_tracker.extract_bbox(frame, first_hand) if first_hand else None
+        if bbox is not None:
+            x_min, y_min, x_max, y_max = bbox
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
 
         if model is None:
             cv2.putText(
@@ -123,8 +121,9 @@ def main():
                 (0, 0, 255),
                 2,
             )
-        else:
-            predict_frame(frame, model, hand_tracker, prediction_history)
+        elif bbox is not None:
+            # Classify the cropped hand region when we have a bbox
+            classify_crop(frame, model, bbox, prediction_history)
 
         if not hand_tracker.available:
             cv2.putText(

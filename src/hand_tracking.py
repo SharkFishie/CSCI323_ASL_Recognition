@@ -1,86 +1,165 @@
 """Small wrapper around MediaPipe Hands for webcam inference."""
 
+"""Hand tracker using MediaPipe Tasks API.
+
+This implementation uses the MediaPipe Tasks Python API (HandLandmarker)
+when available and reports a clear `error_message` when it is not. The
+class provides simple drawing and bbox extraction helpers for the live
+inference loop.
+"""
+
+import os
+from typing import Optional, Tuple, List
+
 import cv2
 
 try:
     import mediapipe as mp
-except Exception as exc:  # pragma: no cover - depends on local environment
+    from mediapipe.tasks import python as mp_tasks
+    from mediapipe.tasks.python import vision as mp_vision
+except Exception as exc:  # pragma: no cover - environment dependent
     mp = None
-    MEDIAPIPE_IMPORT_ERROR = exc
+    mp_tasks = None
+    mp_vision = None
+    MEDIAPIPE_TASKS_ERROR = exc
 else:
-    MEDIAPIPE_IMPORT_ERROR = None
+    MEDIAPIPE_TASKS_ERROR = None
 
-from .config import MIN_DETECTION_CONFIDENCE, MIN_TRACKING_CONFIDENCE
+from .config import HAND_LANDMARKER_MODEL_PATH, NUM_HANDS, MIN_DETECTION_CONFIDENCE, MIN_TRACKING_CONFIDENCE
 
 
 class HandTracker:
-    """Detect a single hand and extract a simple bounding box."""
+    """HandLandmarker wrapper using the Tasks API.
 
-    def __init__(self):
+    Attributes
+    - available: whether a Tasks-based landmarker is ready
+    - error_message: a human-readable error if unavailable
+    """
+
+    def __init__(self, model_path: str = HAND_LANDMARKER_MODEL_PATH):
+        self.model_path = model_path
         self.available = False
         self.error_message = None
+        self._detector = None
 
-        if mp is None:
-            self.error_message = f"MediaPipe unavailable: {MEDIAPIPE_IMPORT_ERROR}"
-            self.mp_hands = None
-            self.mp_draw = None
+        if mp is None or mp_tasks is None or mp_vision is None:
+            self.error_message = f"MediaPipe Tasks unavailable: {MEDIAPIPE_TASKS_ERROR}"
+            return
+
+        if not os.path.exists(self.model_path):
+            self.error_message = f"Hand landmarker model missing: {self.model_path}"
             return
 
         try:
-            self.mp_hands = mp.solutions.hands
-            self.hands = self.mp_hands.Hands(
-                static_image_mode=False,
-                max_num_hands=1,
-                min_detection_confidence=MIN_DETECTION_CONFIDENCE,
-                min_tracking_confidence=MIN_TRACKING_CONFIDENCE,
-            )
-            self.mp_draw = mp.solutions.drawing_utils
-            self.available = True
-        except Exception as exc:  # pragma: no cover - depends on local environment
-            self.error_message = f"MediaPipe init failed: {exc}"
-            self.mp_hands = None
-            self.mp_draw = None
+            BaseOptions = mp_tasks.BaseOptions
+            HandLandmarker = mp_vision.HandLandmarker
+            HandLandmarkerOptions = mp_vision.HandLandmarkerOptions
+            RunningMode = mp_vision.RunningMode
 
-    def detect(self, frame):
-        """Run MediaPipe on a BGR frame and return the results."""
-        if not self.available:
+            base_options = BaseOptions(model_asset_path=self.model_path)
+            options = HandLandmarkerOptions(
+                base_options=base_options,
+                running_mode=RunningMode.VIDEO,
+                num_hands=NUM_HANDS,
+                min_hand_detection_confidence=float(MIN_DETECTION_CONFIDENCE),
+                min_tracking_confidence=float(MIN_TRACKING_CONFIDENCE),
+            )
+
+            self._detector = HandLandmarker.create_from_options(options)
+            self.available = True
+        except Exception as exc:  # pragma: no cover - environment dependent
+            self.error_message = f"Failed to initialize HandLandmarker: {exc}"
+            self._detector = None
+
+    def is_available(self) -> bool:
+        return self.available
+
+    def detect(self, frame, timestamp_ms: int):
+        """Detect hands in a BGR OpenCV frame and return a HandLandmarkerResult.
+
+        The Tasks API expects an `mp.Image` (SRGB) and a monotonically
+        increasing timestamp in milliseconds for VIDEO running mode.
+        """
+        if not self.available or self._detector is None:
             return None
 
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        return self.hands.process(rgb_frame)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+        return self._detector.detect_for_video(mp_image, timestamp_ms)
 
-    def draw(self, frame, results):
-        """Draw landmarks and connections if a hand is detected."""
-        if not self.available or results is None or not getattr(results, "multi_hand_landmarks", None):
+    def get_first_hand(self, result):
+        """Return the first hand's landmark list, or None.
+
+        In the Tasks API `result.hand_landmarks` is a list (one entry per
+        detected hand); each entry is itself a list of NormalizedLandmark
+        objects exposing `.x`, `.y`, `.z` in normalized [0, 1] coordinates.
+        """
+        if result is None:
+            return None
+
+        landmarks = getattr(result, "hand_landmarks", None)
+        if not landmarks:
+            return None
+
+        return landmarks[0]
+
+    def draw(self, frame, result):
+        """Draw landmarks and a lightweight skeleton on the frame."""
+        landmarks = getattr(result, "hand_landmarks", None)
+        if not landmarks:
             return
 
-        for hand_landmarks in results.multi_hand_landmarks:
-            self.mp_draw.draw_landmarks(frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+        h, w = frame.shape[:2]
+        for hand in landmarks:
+            pts = []
+            for lm in hand:
+                x = int(lm.x * w)
+                y = int(lm.y * h)
+                pts.append((x, y))
+                cv2.circle(frame, (x, y), 3, (0, 255, 0), -1)
+
+            connections = [
+                (0, 1), (1, 2), (2, 3), (3, 4),
+                (0, 5), (5, 6), (6, 7), (7, 8),
+                (5, 9), (9, 10), (10, 11), (11, 12),
+                (9, 13), (13, 14), (14, 15), (15, 16),
+                (13, 17), (17, 18), (18, 19), (19, 20),
+                (0, 17)
+            ]
+            for a, b in connections:
+                if a < len(pts) and b < len(pts):
+                    cv2.line(frame, pts[a], pts[b], (255, 0, 0), 2)
 
     def extract_bbox(self, frame, hand_landmarks):
-        """Create a padded bounding box from normalized hand landmarks."""
-        if not self.available or hand_landmarks is None:
+        """Compute a padded bbox from a landmarks list (normalized coordinates)."""
+        if not hand_landmarks:
             return None
 
-        height, width = frame.shape[:2]
-        x_values = []
-        y_values = []
+        h, w = frame.shape[:2]
+        xs = [float(lm.x) for lm in hand_landmarks]
+        ys = [float(lm.y) for lm in hand_landmarks]
 
-        for landmark in hand_landmarks.landmark:
-            x_values.append(landmark.x)
-            y_values.append(landmark.y)
+        if not xs or not ys:
+            return None
 
-        x_min = int(min(x_values) * width)
-        y_min = int(min(y_values) * height)
-        x_max = int(max(x_values) * width)
-        y_max = int(max(y_values) * height)
+        x_min = int(min(xs) * w)
+        y_min = int(min(ys) * h)
+        x_max = int(max(xs) * w)
+        y_max = int(max(ys) * h)
 
         pad_x = int(0.15 * (x_max - x_min + 1))
         pad_y = int(0.15 * (y_max - y_min + 1))
 
         x_min = max(0, x_min - pad_x)
         y_min = max(0, y_min - pad_y)
-        x_max = min(width - 1, x_max + pad_x)
-        y_max = min(height - 1, y_max + pad_y)
+        x_max = min(w - 1, x_max + pad_x)
+        y_max = min(h - 1, y_max + pad_y)
 
         return x_min, y_min, x_max, y_max
+
+    def close(self):
+        try:
+            if self._detector:
+                self._detector.close()
+        except Exception:
+            pass

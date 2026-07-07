@@ -84,3 +84,15 @@ python -m src.live_inference
 ```
 
 If the model file is missing, the webcam window will still open and show a warning overlay so the scaffold can be tested and developed further.
+
+MediaPipe Tasks requirement
+
+The realtime scaffold uses the MediaPipe Tasks Hand Landmarker for improved
+hand detection when available. Place a Hand Landmarker task file at
+`models/hand_landmarker.task` before running live inference. If the file is
+missing or MediaPipe Tasks is not available the scaffold will fall back to a
+simple OpenCV contour heuristic, but results will be less reliable.
+
+Download the official MediaPipe hand landmarker task file from the MediaPipe
+project and place it under `models/hand_landmarker.task` to enable the Tasks
+detector.

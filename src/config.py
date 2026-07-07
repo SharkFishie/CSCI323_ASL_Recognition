@@ -12,3 +12,8 @@ FRAME_HEIGHT = 720
 MIN_DETECTION_CONFIDENCE = 0.5
 MIN_TRACKING_CONFIDENCE = 0.5
 PREDICTION_HISTORY = 5
+
+# MediaPipe Tasks model (optional - place under repo `models/`)
+HAND_LANDMARKER_MODEL_PATH = "models/hand_landmarker.task"
+# number of hands to detect
+NUM_HANDS = 1

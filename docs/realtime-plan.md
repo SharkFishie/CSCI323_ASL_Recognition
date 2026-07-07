@@ -7,6 +7,7 @@ The goal is to extend the existing static ASL alphabet image-classification proj
 - Keep the current CNN image-classification workflow as the baseline.
 - Use OpenCV for webcam capture and display.
 - Use MediaPipe Hands for hand detection and landmark tracking.
+ - Use MediaPipe Hands (Tasks API) for hand detection and landmark tracking when available. The project now prefers the MediaPipe Tasks `HandLandmarker` for long-term compatibility; place a `models/hand_landmarker.task` file in the repo to enable it. If the task file is missing, the scaffold falls back to a simple OpenCV contour heuristic.
 - Use a TensorFlow model for live inference when a saved model is available.
 - Smooth predictions across a short history of frames to reduce jitter.
 
