@@ -16,9 +16,15 @@ def load_classifier(model_path=MODEL_PATH):
     if not os.path.exists(model_path):
         return None
 
-    from tensorflow.keras.models import load_model
+    try:
+        from tensorflow.keras.models import load_model
+    except Exception:
+        return None
 
-    return load_model(model_path)
+    try:
+        return load_model(model_path)
+    except Exception:
+        return None
 
 
 def smooth_prediction(history, label, confidence):
@@ -36,14 +42,21 @@ def smooth_prediction(history, label, confidence):
 
 def predict_frame(frame, model, hand_tracker, prediction_history):
     """Run detection, crop extraction, and prediction for a single frame."""
+    if not hand_tracker.available:
+        return None, None, prediction_history
+
     results = hand_tracker.detect(frame)
     hand_tracker.draw(frame, results)
 
-    if not results.multi_hand_landmarks:
+    if results is None or not getattr(results, "multi_hand_landmarks", None):
         return None, None, prediction_history
 
     hand_landmarks = results.multi_hand_landmarks[0]
-    x_min, y_min, x_max, y_max = hand_tracker.extract_bbox(frame, hand_landmarks)
+    bbox = hand_tracker.extract_bbox(frame, hand_landmarks)
+    if bbox is None:
+        return None, None, prediction_history
+
+    x_min, y_min, x_max, y_max = bbox
 
     cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
 
@@ -112,6 +125,27 @@ def main():
             )
         else:
             predict_frame(frame, model, hand_tracker, prediction_history)
+
+        if not hand_tracker.available:
+            cv2.putText(
+                frame,
+                "Hand tracking unavailable",
+                (20, 100),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 0, 255),
+                2,
+            )
+            if hand_tracker.error_message:
+                cv2.putText(
+                    frame,
+                    hand_tracker.error_message[:70],
+                    (20, 130),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (0, 0, 255),
+                    1,
+                )
 
         cv2.imshow("ASL Live Inference", frame)
 
