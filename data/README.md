@@ -105,3 +105,4 @@ Labels are integers that map directly to letters, but **label 9 is skipped** (wo
 - Each team member must download the dataset independently
 - Ensure the CSV files are placed directly in `data/` (not in a subfolder) — notebook paths expect `../data/sign_mnist_train.csv`
 - On Google Colab, the dataset must be re-downloaded each session (or stored on Google Drive)
+

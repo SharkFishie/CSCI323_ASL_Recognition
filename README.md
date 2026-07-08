@@ -2,15 +2,15 @@
 
 ## Overview
 
-This repository started as a static image-classification project for American Sign Language (ASL) alphabet recognition. The initial work focuses on training convolutional neural networks to classify still images of hand poses for the 29 classes in the Kaggle ASL Alphabet dataset.
+This repository started as a static image-classification project for American Sign Language (ASL) alphabet recognition, and now includes a working realtime webcam recognizer.
 
-The project is now being extended with a first-pass realtime webcam inference scaffold. This new code is intentionally simple and modular: it is not a claim that live ASL recognition is fully solved yet. Instead, it provides a beginner-friendly starting point for webcam capture, hand tracking, and live inference with a saved model.
+The realtime path is **skeleton-based** rather than photo-based. Each frame, MediaPipe detects the 21 hand landmarks; we draw them as a colored skeleton on a black canvas (MediaPipe's default style) and classify *that* image with a small CNN. Because the skeleton discards skin tone, lighting, and background, the model generalizes to a live webcam far better than one trained on raw photos.
 
 ## Dataset
 
-The project uses the [ASL Alphabet dataset from Kaggle](https://www.kaggle.com/datasets/grassknoted/asl-alphabet). The dataset contains roughly 87,000 images of size 200x200 across 29 classes: A through Z, plus SPACE, DELETE, and NOTHING.
+The realtime classifier is trained on the [ASL Alphabet Wireframes dataset](https://www.kaggle.com/datasets/dylanpallickara129/asl-alphabet-wireframes) — ~99,000 MediaPipe hand-skeleton images across the **24 static ASL letters** (J and Z are motion signs and are excluded). It is downloaded automatically via `kagglehub` (no Kaggle login required for this public dataset).
 
-This dataset is suitable for baseline static-image training. For realtime webcam use, later work may need webcam-style samples or a landmark-based dataset to improve robustness under different lighting, hand positions, and backgrounds.
+The original notebooks explore the Sign-MNIST dataset (28×28 grayscale) for static-image CNN baselines; that work is independent of the realtime pipeline.
 
 ## Tech Stack
 
@@ -34,21 +34,26 @@ CSCI323_ASL_Recognition/
 ├── notebooks/
 ├── src/
 │   ├── __init__.py
-│   ├── config.py
-│   ├── hand_tracking.py
-│   ├── preprocessing.py
-│   └── live_inference.py
+│   ├── config.py          # shared settings (image size, paths, classes)
+│   ├── hand_tracking.py   # MediaPipe Tasks HandLandmarker wrapper
+│   ├── skeleton.py        # render landmarks as a MediaPipe-style skeleton
+│   ├── preprocessing.py   # crop-to-content + resize for the classifier
+│   └── live_inference.py  # webcam loop: detect -> render -> classify
+├── scripts/
+│   ├── prep_wireframes.py # one-time: build the processed training cache
+│   ├── train_asl.py       # train the skeleton CNN
+│   └── verify_inference.py# held-out accuracy check
 └── results/
     ├── figures/
     ├── metrics/
-    └── models/
+    └── models/            # best_model.h5 + class_names.json (written by training)
 ```
 
 ## Setup
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.11 (MediaPipe/TensorFlow wheels; the repo ships a `.venv311`)
 - pip
 
 ### Local
@@ -56,43 +61,53 @@ CSCI323_ASL_Recognition/
 ```bash
 git clone https://github.com/mwlde/CSCI323_ASL_Recognition.git
 cd CSCI323_ASL_Recognition
-python -m venv venv
-source venv/bin/activate        # Linux/macOS
-# venv\Scripts\activate         # Windows
-pip install -r requirements.txt
+python3.11 -m venv .venv311
+.venv311/bin/pip install -r requirements.txt
 ```
 
-## Approach
+## Realtime pipeline
 
-The original workflow is still centered on static image classification with CNNs. The repository currently supports training and evaluating models on still images, while the new scaffold adds a simple path toward realtime inference.
+Each webcam frame flows through:
 
-The live webcam scaffold uses:
+1. **OpenCV** captures and displays the frame.
+2. **MediaPipe Tasks HandLandmarker** detects the 21 hand landmarks (`src/hand_tracking.py`).
+3. **`src/skeleton.py`** renders those landmarks as a colored skeleton on black, normalized (crop-to-content + square-pad) so position and scale don't matter.
+4. **A small Keras CNN** classifies the skeleton into one of the 24 letters.
+5. A short prediction-history buffer smooths the label across frames.
 
-- OpenCV for webcam capture and display
-- MediaPipe Hands for hand detection and landmark tracking
-- TensorFlow / Keras for loading a trained model later placed at results/models/best_model.h5
-- A short prediction-history buffer to smooth outputs across frames
+A right-hand sidebar shows the detected letter in large type, a confidence bar, and the exact skeleton ("model input") being fed to the model, so you can see what it "sees".
 
-This is a first-pass scaffold, not a finished realtime recognition system.
+> Uses the modern MediaPipe **Tasks** API (`mediapipe >= 0.10`). The legacy `mp.solutions.Hands` API is not used.
 
-## Running the webcam scaffold
+## Environment
 
-Once a trained model is available at results/models/best_model.h5, run:
+Use the Python 3.11 virtualenv (`.venv311`), which has TensorFlow, OpenCV, and MediaPipe installed:
 
 ```bash
-python -m src.live_inference
+.venv311/bin/pip install -r requirements.txt   # first-time setup
 ```
 
-If the model file is missing, the webcam window will still open and show a warning overlay so the scaffold can be tested and developed further.
+The MediaPipe hand landmarker model lives at `models/hand_landmarker.task` (already included).
 
-MediaPipe Tasks requirement
+## Training the model
 
-The realtime scaffold uses the MediaPipe Tasks Hand Landmarker for improved
-hand detection when available. Place a Hand Landmarker task file at
-`models/hand_landmarker.task` before running live inference. If the file is
-missing or MediaPipe Tasks is not available the scaffold will fall back to a
-simple OpenCV contour heuristic, but results will be less reliable.
+```bash
+# 1. Download + preprocess the wireframe dataset into a local cache (one-time)
+.venv311/bin/python -m scripts.prep_wireframes
 
-Download the official MediaPipe hand landmarker task file from the MediaPipe
-project and place it under `models/hand_landmarker.task` to enable the Tasks
-detector.
+# 2. Train the skeleton classifier -> results/models/best_model.h5 (+ class_names.json)
+.venv311/bin/python -m scripts.train_asl
+
+# 3. (optional) Check held-out accuracy
+.venv311/bin/python -m scripts.verify_inference
+```
+
+The included model reaches ~97% validation accuracy (~92% on the held-out inference check). The most-confused letters are M/N/T, which differ only by thumb placement.
+
+## Running the webcam demo
+
+```bash
+.venv311/bin/python -m src.live_inference
+```
+
+Press `q` to quit. If `results/models/best_model.h5` is missing, the window still opens and shows hand tracking with a warning overlay, so you can develop without a trained model.

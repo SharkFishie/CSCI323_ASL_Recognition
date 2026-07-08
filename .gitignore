@@ -23,8 +23,14 @@ data/*.zip
 data/train/
 data/test/
 
+#generated training cache (rebuild with scripts/prep_wireframes.py)
+data/wireframes_processed/
+
+#downloaded MediaPipe hand landmarker model
+models/*.task
+
 #model files (too big for git)
-#trained models 
+#trained models
 results/models/*.h5
 results/models/*.hdf5
 results/models/*.pkl
