@@ -16,6 +16,14 @@ CLASS_NAMES = [
 MODEL_PATH = "results/models/best_model.h5"
 CLASS_NAMES_PATH = "results/models/class_names.json"
 
+# Per-letter reference hand poses for the tutor's graded feedback
+# (built by scripts/build_reference_poses.py; small, committed to git).
+REFERENCE_POSES_PATH = "results/models/reference_poses.json"
+# Real-photo ASL dataset the reference landmarks are extracted from. The
+# wireframes dataset can't be used here: MediaPipe does not detect hands in
+# skeleton *drawings* (verified 0/30), and the renders don't carry coordinates.
+REFERENCE_DATASET = "grassknoted/asl-alphabet"
+
 # Square input size (px) shared by training prep and live inference.
 IMAGE_SIZE = 96
 

@@ -36,9 +36,13 @@ bar   = 100 * (1 - clamp(mean_landmark_dist / D_max))    # graded feedback
 - **Landmark distance** to a stored per-letter reference pose gives a graded
   0–100 % closeness bar, plus per-joint feedback (color the worst-off joints
   red) so the learner sees *which fingers* are wrong.
-- Reference poses are computed, not hand-crafted: average the normalized 21
-  landmarks per letter over the training data (wrist-centered, scale-normalized
-  so the comparison is translation/scale invariant) → `data/reference_poses.json`.
+- Reference poses are computed, not hand-crafted: robust-averaged normalized
+  landmarks per letter (wrist-centered, scale-normalized, rotation preserved —
+  orientation is part of a sign) → `results/models/reference_poses.json`.
+- Landmark source (decided 2026-07-09): the wireframe dataset is *images* of
+  skeletons with no coordinates, and MediaPipe cannot detect drawn skeletons
+  (verified 0/30). References are instead extracted by running MediaPipe over
+  the real-photo `grassknoted/asl-alphabet` dataset (auto-download, one-time).
 
 ## Planned modules
 
@@ -55,8 +59,15 @@ target prompt, ghost skeleton overlay, and the graded bar.
 
 ## Build order (each step demoable on its own)
 
-1. **Reference poses + similarity metric** — foundation; also a nice
-   standalone visualization.
+1. ✅ **Reference poses + similarity metric** (done 2026-07-09) —
+   `src/tutor/reference.py` + `scripts/build_reference_poses.py` /
+   `verify_reference_poses.py`. Validation: 81.8% nearest-reference accuracy
+   over 24 classes from geometry alone (chance 4%); correct letters score
+   0.88 on the graded bar vs 0.19 for wrong letters; confusions are the
+   genuinely-similar pairs (R↔U, K↔V, M↔N). Grid figure:
+   `results/figures/reference_poses.png`. Known weak spot: M/N references are
+   noisy (thumb-tucked fists occlude landmarks; intra spread ~0.35 vs ~0.07
+   elsewhere).
 2. **Teach mode** — target letter + ghost skeleton + live per-joint feedback.
 3. **Practice mode** — free signing with live pass/fail + graded bar.
 4. **Timed quiz** — prompt, timer, streak, end screen.

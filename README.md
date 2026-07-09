@@ -69,13 +69,17 @@ CSCI323_ASL_Recognition/
 │   ├── hand_tracking.py        # MediaPipe Tasks HandLandmarker wrapper
 │   ├── skeleton.py             # render landmarks as a MediaPipe-style skeleton
 │   ├── preprocessing.py        # crop-to-content + resize for the classifier
-│   └── live_inference.py       # webcam loop: detect -> render -> classify
+│   ├── live_inference.py       # webcam loop: detect -> render -> classify
+│   └── tutor/
+│       └── reference.py        # per-letter reference poses + similarity scoring
 ├── scripts/
 │   ├── prep_wireframes.py      # one-time: build the processed training cache
 │   ├── train_asl.py            # train the skeleton CNN
-│   └── verify_inference.py     # held-out accuracy check
+│   ├── verify_inference.py     # held-out accuracy check
+│   ├── build_reference_poses.py   # extract reference poses from real photos
+│   └── verify_reference_poses.py  # sanity-check the similarity metric
 └── results/
-    └── models/                 # best_model.h5 + class_names.json (from training)
+    └── models/                 # best_model.h5, class_names.json, reference_poses.json
 ```
 
 ## Setup
@@ -119,9 +123,17 @@ placement. Key knobs live in `src/config.py` (`IMAGE_SIZE`, `MAX_PER_CLASS`,
 The next phase turns the recognizer into an **ASL fingerspelling tutor**:
 guided teach mode with a reference-pose ghost overlay and per-finger feedback,
 practice and timed-quiz modes, and a spell-a-word mode that chains letters
-into words. Correctness will combine two signals — the CNN as a pass/fail
-gate, and geometric distance to a per-letter reference pose as a graded
-closeness score. Details and build order: [docs/roadmap.md](docs/roadmap.md).
+into words. Correctness combines two signals — the CNN as a pass/fail gate,
+and geometric distance to a per-letter reference pose as a graded closeness
+score. Details and build order: [docs/roadmap.md](docs/roadmap.md).
+
+**Done so far:** the reference-pose foundation (`src/tutor/reference.py`) —
+canonical 21-landmark poses for all 24 letters, extracted with MediaPipe from
+real ASL photos and robust-averaged. The geometric metric alone classifies
+held-out photos at 81.8% (24 classes, chance 4%), and its confusions mirror
+human ones (R↔U, K↔V, M↔N):
+
+![Reference poses](results/figures/reference_poses.png)
 
 ## Tech stack
 
