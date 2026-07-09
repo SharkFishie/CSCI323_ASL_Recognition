@@ -60,8 +60,9 @@ static-image CNN baselines; that work is independent of the realtime pipeline.
 CSCI323_ASL_Recognition/
 ├── requirements.txt
 ├── models/                     # hand_landmarker.task (downloaded, gitignored)
-├── data/                       # datasets (large files gitignored)
+├── data/                       # datasets — nothing tracked by git (see data/README.md)
 ├── docs/
+│   └── roadmap.md              # where the project is heading (fingerspelling tutor)
 ├── notebooks/                  # Sign-MNIST CNN experiments
 ├── src/
 │   ├── config.py               # shared settings (image size, paths, classes)
@@ -112,6 +113,15 @@ The model reaches **~97% validation accuracy** (~92% on the held-out inference
 check). The most-confused letters are M/N/T, which differ only by thumb
 placement. Key knobs live in `src/config.py` (`IMAGE_SIZE`, `MAX_PER_CLASS`,
 `EPOCHS`, `BATCH_SIZE`).
+
+## Roadmap
+
+The next phase turns the recognizer into an **ASL fingerspelling tutor**:
+guided teach mode with a reference-pose ghost overlay and per-finger feedback,
+practice and timed-quiz modes, and a spell-a-word mode that chains letters
+into words. Correctness will combine two signals — the CNN as a pass/fail
+gate, and geometric distance to a per-letter reference pose as a graded
+closeness score. Details and build order: [docs/roadmap.md](docs/roadmap.md).
 
 ## Tech stack
 

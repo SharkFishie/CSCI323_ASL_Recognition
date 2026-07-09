@@ -16,10 +16,10 @@ ENV/
 *.ipynb_checkpoints/
 
 #data files (too big for git)
-data/sign_mnist_train.csv
-data/sign_mnist_test.csv
 data/*.csv
 data/*.zip
+data/sign_mnist_train/
+data/sign_mnist_test/
 data/train/
 data/test/
 
@@ -67,3 +67,8 @@ desktop.ini
 *.log
 *.bak
 .cache/
+
+#local-only Claude Code notes (not committed)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
